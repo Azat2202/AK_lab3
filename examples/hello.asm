@@ -64,4 +64,4 @@ welcome:
 greeting:
             WORD    "Hello, "
 data:
-            WORD    ?
+            WORD    0x0
