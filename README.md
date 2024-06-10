@@ -33,6 +33,7 @@ op0 ::= "DUP"
       | "XOR"
       | "JUMP"
       | "JZ"
+      | "HALT"
 
 op1 ::= "PUSH"
 
@@ -40,7 +41,7 @@ label_name ::= <any of "a-z A-Z _"> { <any of "a-z A-Z 0-9 _"> }
 
 comment ::= ";" <any symbols except "\n">
 
-word_data ::= variable | string
+word_data ::= number | string
 
 variable ::= number | label_name
 
@@ -68,6 +69,7 @@ number ::= 0x <any of "0-9 ABCDEF">
   - ```JZ``` - переход на адрес с вершины стека, если второй элемент равен 0 ```[a, b] -> [a] ```
   - ```PUSH number``` - положить число на стек ```[] -> [2]```
   - ```PUSH label``` - положить адрес метки на стек ```[] -> [0x801]```
+  - ```HALT``` - остановка программы
 
 ### Семантика
   - Язык предполагает последовательное исполнение
@@ -83,6 +85,9 @@ number ::= 0x <any of "0-9 ABCDEF">
     ``` asm 
     jmp label   ; --> `jmp 123`, где 123 - номер инструкции после объявления метки
     ```
+
+## Транслятор
+
 
 ## Модель процессора
 

@@ -1,5 +1,5 @@
 message:
-            WORD 	'hello, world!'
+            WORD 	"Hello, world!"
 _start:
             PUSH 	message     ; [message_addr]
 loop:
