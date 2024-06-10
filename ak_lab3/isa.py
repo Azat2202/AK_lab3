@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from enum import Enum
 from typing import Optional
 
@@ -39,13 +39,24 @@ class Instruction:
     arg: Optional[int | str] = None
     arg_type: Optional[ArgType] = None
 
+    def to_dict(self):
+        # exclude None fields
+        data = asdict(self)
+        return {key: value for key, value in data.items() if value is not None}
 
-def write_code(filename: str, code: list[Opcode]) -> None:
+
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Instruction):
+            return obj.to_dict()
+        if isinstance(obj, Enum):
+            return obj.value
+        return json.JSONEncoder.default(self, obj)
+
+
+def write_code(filename: str, code: dict) -> None:
     with open(filename, "w", encoding="utf-8") as file:
-        buf = []
-        for instr in code:
-            buf.append(json.dumps(instr))
-        file.write("[" + ",\n ".join(buf) + "]")
+        file.write(json.dumps(code, cls=CustomEncoder, indent=2))
 
 
 def read_code(filename: str) -> dict[str, str]:

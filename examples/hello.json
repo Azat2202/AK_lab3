@@ -1,0 +1,290 @@
+{
+  "start": 0,
+  "code": [
+    {
+      "opcode": "push",
+      "arg": "0x801",
+      "arg_type": "implicit"
+    },
+    {
+      "opcode": "push",
+      "arg": 53,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "over"
+    },
+    {
+      "opcode": "over"
+    },
+    {
+      "opcode": "load"
+    },
+    {
+      "opcode": "push",
+      "arg": 12,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "jz"
+    },
+    {
+      "opcode": "swap"
+    },
+    {
+      "opcode": "save"
+    },
+    {
+      "opcode": "inc"
+    },
+    {
+      "opcode": "push",
+      "arg": 2,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "jump"
+    },
+    {
+      "opcode": "swap"
+    },
+    {
+      "opcode": "save"
+    },
+    {
+      "opcode": "pop"
+    },
+    {
+      "opcode": "push",
+      "arg": 77,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "over"
+    },
+    {
+      "opcode": "load"
+    },
+    {
+      "opcode": "push",
+      "arg": 25,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "jz"
+    },
+    {
+      "opcode": "over"
+    },
+    {
+      "opcode": "save"
+    },
+    {
+      "opcode": "inc"
+    },
+    {
+      "opcode": "push",
+      "arg": 16,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "jump"
+    },
+    {
+      "opcode": "pop"
+    },
+    {
+      "opcode": "pop"
+    },
+    {
+      "opcode": "push",
+      "arg": 70,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "over"
+    },
+    {
+      "opcode": "over"
+    },
+    {
+      "opcode": "load"
+    },
+    {
+      "opcode": "push",
+      "arg": 38,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "jz"
+    },
+    {
+      "opcode": "swap"
+    },
+    {
+      "opcode": "save"
+    },
+    {
+      "opcode": "inc"
+    },
+    {
+      "opcode": "push",
+      "arg": 42,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "jump"
+    },
+    {
+      "opcode": "pop"
+    },
+    {
+      "opcode": "pop"
+    },
+    {
+      "opcode": "pop"
+    },
+    {
+      "opcode": "push",
+      "arg": 77,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "over"
+    },
+    {
+      "opcode": "over"
+    },
+    {
+      "opcode": "load"
+    },
+    {
+      "opcode": "push",
+      "arg": 52,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "jz"
+    },
+    {
+      "opcode": "swap"
+    },
+    {
+      "opcode": "save"
+    },
+    {
+      "opcode": "inc"
+    },
+    {
+      "opcode": "push",
+      "arg": 42,
+      "arg_type": "address"
+    },
+    {
+      "opcode": "jump"
+    },
+    {
+      "opcode": "halt"
+    },
+    {
+      "opcode": "word",
+      "arg": 87
+    },
+    {
+      "opcode": "word",
+      "arg": 104
+    },
+    {
+      "opcode": "word",
+      "arg": 97
+    },
+    {
+      "opcode": "word",
+      "arg": 116
+    },
+    {
+      "opcode": "word",
+      "arg": 96
+    },
+    {
+      "opcode": "word",
+      "arg": 115
+    },
+    {
+      "opcode": "word",
+      "arg": 32
+    },
+    {
+      "opcode": "word",
+      "arg": 121
+    },
+    {
+      "opcode": "word",
+      "arg": 111
+    },
+    {
+      "opcode": "word",
+      "arg": 117
+    },
+    {
+      "opcode": "word",
+      "arg": 114
+    },
+    {
+      "opcode": "word",
+      "arg": 32
+    },
+    {
+      "opcode": "word",
+      "arg": 110
+    },
+    {
+      "opcode": "word",
+      "arg": 97
+    },
+    {
+      "opcode": "word",
+      "arg": 109
+    },
+    {
+      "opcode": "word",
+      "arg": 101
+    },
+    {
+      "opcode": "word",
+      "arg": 63
+    },
+    {
+      "opcode": "word",
+      "arg": 72
+    },
+    {
+      "opcode": "word",
+      "arg": 101
+    },
+    {
+      "opcode": "word",
+      "arg": 108
+    },
+    {
+      "opcode": "word",
+      "arg": 108
+    },
+    {
+      "opcode": "word",
+      "arg": 111
+    },
+    {
+      "opcode": "word",
+      "arg": 44
+    },
+    {
+      "opcode": "word",
+      "arg": 32
+    },
+    {
+      "opcode": "word",
+      "arg": "0"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import sys
 from typing import AnyStr
 
-from ak_lab3.isa import Instruction, Opcode, ArgType
+from ak_lab3.isa import Instruction, Opcode, ArgType, write_code
 
 
 def remove_comment(line: str) -> str:
@@ -19,13 +19,12 @@ def parse_word_data(data: str) -> list[Instruction]:
 
 
 def preprocess(input_data: AnyStr):
-    """Remove comments, replace tabs with spaces, only one space"""
-    return "\n".join(
-        [
-            " ".join(remove_comment(str(line_raw)).replace("\t", " ").split())
-            for line_raw in input_data.splitlines()
-        ]
-    )
+    """Remove comments, replace tabs with spaces, only one space and empty lines"""
+    data = [remove_comment(str(line_raw)) for line_raw in input_data.splitlines()]
+    data = [line.replace("\t", " ") for line in data]
+    data = [" ".join(line.split()) for line in data]
+    data = [line for line in data if line != ""]
+    return "\n".join(data)
 
 
 def translate_stage_1(input_data: str) -> tuple[list[Instruction], dict[str, int]]:
@@ -49,7 +48,7 @@ def translate_stage_1(input_data: str) -> tuple[list[Instruction], dict[str, int
     return code, labels
 
 
-def translate_stage_2(code: list[Instruction], labels: dict[str, int]):
+def translate_stage_2(code: list[Instruction], labels: dict[str, int]) -> tuple[list[Instruction], int]:
     for i, instr in enumerate(code):
         if instr.opcode != Opcode.PUSH:
             continue
@@ -57,27 +56,30 @@ def translate_stage_2(code: list[Instruction], labels: dict[str, int]):
             continue
         assert code[i].arg in labels, f"None such label: {code[i].arg}"
         code[i].arg = labels[str(code[i].arg)]
-    return code
+    assert "_start" in labels, "No label start in code!"
+    return code, labels["_start"]
 
 
-def translate(input_data: AnyStr):
+def translate(input_data: AnyStr) -> dict:
     input_str = preprocess(input_data)
     code, labels = translate_stage_1(input_str)
-    code = translate_stage_2(code, labels)
-    print(*code, sep="\n")
-    print(labels)
+    code, start = translate_stage_2(code, labels)
+    return {
+        "start": start,
+        "code": code,
+    }
 
 
 def main():
     assert (
         len(sys.argv) == 3
     ), "Wrong arguments: translator.py <input_file> <output_file>"
-    _, source, _ = sys.argv
+    _, source, target = sys.argv
     with open(source, "r", encoding="utf-8") as file:
         input_data = file.read()
 
-    translate(input_data)
-    # print(code)
+    code = translate(input_data)
+    write_code(target, code)
 
 
 if __name__ == "__main__":
