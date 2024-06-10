@@ -48,7 +48,9 @@ def translate_stage_1(input_data: str) -> tuple[list[Instruction], dict[str, int
     return code, labels
 
 
-def translate_stage_2(code: list[Instruction], labels: dict[str, int]) -> tuple[list[Instruction], int]:
+def translate_stage_2(
+    code: list[Instruction], labels: dict[str, int]
+) -> tuple[list[Instruction], int]:
     for i, instr in enumerate(code):
         if instr.opcode != Opcode.PUSH:
             continue

@@ -46,12 +46,12 @@ class Instruction:
 
 
 class CustomEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Instruction):
-            return obj.to_dict()
-        if isinstance(obj, Enum):
-            return obj.value
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if isinstance(o, Instruction):
+            return o.to_dict()
+        if isinstance(o, Enum):
+            return o.value
+        return json.JSONEncoder.default(self, o)
 
 
 def write_code(filename: str, code: dict) -> None:
