@@ -1,7 +1,7 @@
 import sys
 from typing import AnyStr
 
-from ak_lab3.isa import Instruction, Opcode
+from ak_lab3.isa import Instruction, Opcode, ArgType
 
 
 def remove_comment(line: str) -> str:
@@ -36,22 +36,34 @@ def translate_stage_1(input_data: str) -> tuple[list[Instruction], dict[str, int
         line = remove_comment(str(line_raw))
         if line[-1] == ":":
             assert line.count(" ") == 0, "Label and text must be on different lines"
-            labels.update({line: len(code) - 1})
+            labels.update({line[:-1]: len(code)})
         elif line.count(" ") == 0:
-            code.append(Instruction(parse_opcode(line), arg=None))
+            code.append(Instruction(parse_opcode(line)))
         elif line.startswith("PUSH"):
             op, label_name = line.split(" ", 2)
-            code.append(Instruction(parse_opcode(op), label_name))
+            arg_type = ArgType.IMPL if label_name.startswith("0x") else ArgType.ADDR
+            code.append(Instruction(parse_opcode(op), label_name, arg_type))
         elif line.startswith("WORD"):
             _, data = line.split(" ", 1)
             code += parse_word_data(data)
     return code, labels
 
 
+def translate_stage_2(code: list[Instruction], labels: dict[str, int]):
+    for i, instr in enumerate(code):
+        if instr.opcode != Opcode.PUSH:
+            continue
+        if instr.arg_type != ArgType.ADDR:
+            continue
+        assert code[i].arg in labels, f"None such label: {code[i].arg}"
+        code[i].arg = labels[str(code[i].arg)]
+    return code
+
+
 def translate(input_data: AnyStr):
     input_str = preprocess(input_data)
     code, labels = translate_stage_1(input_str)
-
+    code = translate_stage_2(code, labels)
     print(*code, sep="\n")
     print(labels)
 

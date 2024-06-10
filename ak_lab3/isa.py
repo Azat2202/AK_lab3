@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 
 class Opcode(str, Enum):
@@ -27,10 +28,16 @@ class Opcode(str, Enum):
         return self.value
 
 
+class ArgType(str, Enum):
+    IMPL = "implicit"
+    ADDR = "address"
+
+
 @dataclass
 class Instruction:
     opcode: Opcode
-    arg: int | str | None
+    arg: Optional[int | str] = None
+    arg_type: Optional[ArgType] = None
 
 
 def write_code(filename: str, code: list[Opcode]) -> None:
