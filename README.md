@@ -41,7 +41,7 @@ label_name ::= <any of "a-z A-Z _"> { <any of "a-z A-Z 0-9 _"> }
 
 comment ::= ";" <any symbols except "\n">
 
-word_data ::= variable | string
+word_data ::= number | string
 
 variable ::= number | label_name
 

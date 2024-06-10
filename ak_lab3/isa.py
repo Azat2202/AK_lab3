@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from enum import Enum
 
 
@@ -19,10 +20,17 @@ class Opcode(str, Enum):
     JUMP = "jump"
     JZ = "jz"
     PUSH = "push"
+    WORD = "word"
     HALT = "halt"
 
     def __str__(self):
         return self.value
+
+
+@dataclass
+class Instruction:
+    opcode: Opcode
+    arg: int | str | None
 
 
 def write_code(filename: str, code: list[Opcode]) -> None:

@@ -14,12 +14,13 @@ pylint = "^3.2.3"
 mypy = "^1.10.0"
 
 [tool.poetry.scripts]
-main = "trace_handler.__main__:main"
+main = "ak_lab3.__main__:main"
+translator = "ak_lab3.translator:"
 
 [tool.poe.tasks]
 _pylint = "pylint ak_lab3 tests"
 _mypy = "mypy ak_lab3 tests"
-lint = ["_pylint"]
+lint = ["_pylint", "_mypy"]
 format = "black ak_lab3 tests"
 test = "pytest tests"
 
