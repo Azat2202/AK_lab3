@@ -1,7 +1,5 @@
 from enum import StrEnum, auto
 
-from ak_lab3.isa import Opcode
-
 
 class AluOperation(StrEnum):
     ADD = auto()
@@ -15,28 +13,34 @@ class AluOperation(StrEnum):
 
 
 class ALU:
-    z_flag = None
 
     def __init__(self):
-        self.z_flag = False
+        self._z_flag = False
 
     def perform(self, left: int, right: int, operation: AluOperation) -> int:
+        output_value: int
         match operation:
             case AluOperation.ADD:
-                return left + right
+                output_value = left + right
             case AluOperation.SUB:
-                return left - right
+                output_value = left - right
             case AluOperation.MUL:
-                return left * right
+                output_value = left * right
             case AluOperation.DIV:
-                return left // right
+                output_value = left // right
             case AluOperation.XOR:
-                return left ^ right
+                output_value = left ^ right
             case AluOperation.NOT:
-                return not left
+                output_value = not left
             case AluOperation.INC:
-                return left + 1
+                output_value = left + 1
             case AluOperation.DEC:
-                return left - 1
+                output_value = left - 1
             case _:
                 raise NotImplementedError()
+        self._z_flag = output_value == 0
+        return output_value
+
+    @property
+    def z_flag(self) -> bool:
+        return self.z_flag
