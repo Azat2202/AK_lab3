@@ -1,6 +1,10 @@
+import logging
+import sys
 from collections import deque
 from enum import StrEnum, auto
 from queue import Queue
+
+from ak_lab3.isa import read_code, Instruction
 
 
 class AluOperation(StrEnum):
@@ -13,9 +17,11 @@ class AluOperation(StrEnum):
     INC = auto()
     DEC = auto()
 
+
 class AluInputMux(StrEnum):
     ZERO = auto()
     TOS = auto()
+
 
 class ALU:
 
@@ -68,10 +74,15 @@ class IO:
         return f"{map(chr, self.input_buffer)}, {self.output}"
 
 
-
 class DataPath:
-    def __init__(self, alu: ALU, data_memory_size: int, stack_size: int, input_buffer: list[int], mmio: dict[int, IO], start: int):
-        self.input_buffer = input_buffer
+    def __init__(
+        self,
+        alu: ALU,
+        data_memory_size: int,
+        stack_size: int,
+        mmio: dict[int, IO],
+        start: int,
+    ):
         self.memory_size = data_memory_size
         self.memory = [0] * data_memory_size
         self.stack_size = stack_size
@@ -102,7 +113,9 @@ class DataPath:
     def latch_ar(self, value: int):
         self.ar = value
 
-    def perform_alu_operation(self, alu_operation: AluOperation, left: AluInputMux, right: AluInputMux) -> int:
+    def perform_alu_operation(
+        self, alu_operation: AluOperation, left: AluInputMux, right: AluInputMux
+    ) -> int:
         left_input = 0 if left == AluInputMux.ZERO else self._get_first()
         right_input = 0 if right == AluInputMux.ZERO else self._get_second()
         return self.alu.perform(left_input, right_input, alu_operation)
@@ -114,4 +127,71 @@ class DataPath:
         return self.stack[-2]
 
 
+class ControlUnit:
+    _tick: int
 
+    def __init__(self, program: dict, data_path: DataPath):
+        self.program = program
+        self.program_counter = 0
+        self.data_path = data_path
+        self._tick = 0
+
+
+    def decode_and_execute_instruction(self): ...
+
+    def tick(self):
+        self.tick += 1
+
+    def current_tick(self) -> int:
+        return self._tick
+
+
+
+
+STACK_SIZE = 254
+MEMORY_SIZE = 1024
+
+
+def simulation(code: dict, input_tokens, data_memory_size, stack_size, limit) -> tuple[str, int, int]:
+    alu = ALU()
+    io = IO(input_tokens)
+    ios = {801: io}
+    data_path = DataPath(alu, data_memory_size, stack_size, ios, code["start"])
+    control_unit = ControlUnit(code["code"], data_path)
+    instr_counter = 0
+    logging.debug("%s", control_unit)
+    try:
+        while instr_counter < limit:
+            control_unit.decode_and_execute_instruction()
+            instr_counter += 1
+            logging.debug("%s", control_unit)
+    except EOFError:
+        logging.warning("Input buffer is empty!")
+    except StopIteration:
+        pass
+
+    if instr_counter >= limit:
+        logging.warning("Limit exceeded!")
+    logging.info("output buffer: %s", io.output)
+    return io.output, instr_counter, control_unit.current_tick()
+
+
+def main(code_file: str, input_file: str):
+    code = read_code(code_file)
+    with open(input_file, encoding="utf-8") as file:
+        input_text = file.read()
+        input_token = []
+        for char in input_text:
+            input_token.append(char)
+    output, instr_counter, ticks = simulation(
+        code, input_token, data_memory_size=100, stack_size=100, limit=1000
+    )
+    print("".join(output))
+    print("instr_counter: ", instr_counter, "ticks:", ticks)
+
+
+if __name__ == "__main__":
+    logging.getLogger().setLevel(logging.DEBUG)
+    assert len(sys.argv) == 3, "Wrong arguments: machine.py <code_file> <input_file>"
+    _, code_file, input_file = sys.argv
+    main(code_file, input_file)

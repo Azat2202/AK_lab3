@@ -60,4 +60,4 @@ def write_code(filename: str, code: dict) -> None:
 
 
 def read_code(filename: str) -> dict[str, str]:
-    raise NotImplementedError()
+    return json.load(open(filename, encoding="utf-8"))
