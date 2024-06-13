@@ -97,7 +97,7 @@ number ::= 0x <any of "0-9 ABCDEF">
 ```
         +-----------+                                                    
         |           +----push                                            
-        |   data    |                            +----------+            
+        |   data    +----write_second            +----------+            
         |   stack   +----pop   sel               |          |            
         |           |           |                |  Memory  |            
         |           |         +-v-+              |          |<-- read    
