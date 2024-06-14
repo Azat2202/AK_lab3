@@ -56,7 +56,7 @@ class ALU:
 
     @property
     def z_flag(self) -> bool:
-        return self.z_flag
+        return self._z_flag
 
 
 class IO:
@@ -77,11 +77,8 @@ class IO:
 
 
 class DataPath:
-    memory: list[Instruction | int]
-    stack: list[int]
-    mmio: dict[int, IO]
-    pc: int
-    ar: int
+    pc: int = 0
+    ar: int = 0
 
     def __init__(
         self,
@@ -90,7 +87,7 @@ class DataPath:
         mmio: dict[int, IO]
     ):
         self.memory = program + [0] * (DATA_MEMORY_SIZE - len(program))
-        self.stack = [0] * STACK_SIZE
+        self.stack: list[int] = []
         self.mmio = mmio
         self.alu = alu
 
@@ -98,6 +95,7 @@ class DataPath:
         self.stack.pop()
 
     def signal_push(self, value: int):
+        assert len(self.stack) <= STACK_SIZE, "Stack overflow"
         self.stack.append(value)
 
     def signal_write_second(self, value: int):
@@ -107,14 +105,16 @@ class DataPath:
         self.stack[-1] = value
 
     def signal_read_memory(self) -> Instruction | int:
-        if self.pc in self.mmio:
-            return self.mmio[self.pc].read_byte()
-        return self.memory[self.pc]
+        if self.ar in self.mmio:
+            return self.mmio[self.ar].read_byte()
+        if self.memory[self.ar].opcode == Opcode.WORD:
+            return self.memory[self.ar].arg
+        return self.memory[self.ar]
 
     def signal_write_memory(self, value: int):
-        if self.pc in self.mmio:
-            self.mmio[self.pc].write_byte(value)
-        self.memory[self.pc] = value
+        if self.ar in self.mmio:
+            self.mmio[self.ar].write_byte(value)
+        self.memory[self.ar] = value
 
     def signal_latch_ar(self, value: int):
         self.ar = value
@@ -144,25 +144,6 @@ class ControlUnit:
     def __init__(self, data_path: DataPath):
         self.data_path = data_path
         self._tick = 0
-        self.executors: dict[str, Union[Callable[[Instruction], None], Callable[[], None]]] = {
-            Opcode.DUP: self.execute_dup,
-            Opcode.OVER: self.execute_over,
-            Opcode.POP: self.execute_pop,
-            Opcode.SWAP: self.execute_swap,
-            Opcode.LOAD: self.execute_load,
-            Opcode.SAVE: self.execute_save,
-            Opcode.INC: self.execute_single_operand_alu_operation,
-            Opcode.DEC: self.execute_single_operand_alu_operation,
-            Opcode.ADD: self.execute_double_operand_alu_operation,
-            Opcode.SUB: self.execute_double_operand_alu_operation,
-            Opcode.DIV: self.execute_double_operand_alu_operation,
-            Opcode.XOR: self.execute_double_operand_alu_operation,
-            Opcode.MUL: self.execute_double_operand_alu_operation,
-            Opcode.JUMP: self.execute_jump,
-            Opcode.JZ: self.execute_jz,
-            Opcode.PUSH: self.execute_push,
-            Opcode.HALT: self.execute_halt,
-        }
 
     def tick(self):
         self._tick += 1
@@ -178,7 +159,33 @@ class ControlUnit:
         self.tick()
         self.data_path.signal_latch_pc(self.data_path.pc + 1)
         self.tick()
-        self.executors[Opcode[instruction.opcode]](instruction)
+        if instruction.opcode == Opcode.DUP:
+            self.execute_dup()
+        elif instruction.opcode == Opcode.OVER:
+            self.execute_over()
+        elif instruction.opcode == Opcode.POP:
+            self.execute_pop()
+        elif instruction.opcode == Opcode.SWAP:
+            self.execute_swap()
+        elif instruction.opcode == Opcode.LOAD:
+            self.execute_load()
+        elif instruction.opcode == Opcode.SAVE:
+            self.execute_save()
+        elif instruction.opcode in [Opcode.INC, Opcode.DEC]:
+            self.execute_single_operand_alu_operation(instruction)
+        elif instruction.opcode in [Opcode.ADD, Opcode.SUB, Opcode.DIV, Opcode.XOR, Opcode.MUL]:
+            self.execute_double_operand_alu_operation(instruction)
+        elif instruction.opcode == Opcode.JUMP:
+            self.execute_jump()
+        elif instruction.opcode == Opcode.JZ:
+            self.execute_jz()
+        elif instruction.opcode == Opcode.PUSH:
+            self.execute_push(instruction)
+        elif instruction.opcode == Opcode.HALT:
+            self.execute_halt()
+        else:
+            raise NotImplementedError
+
 
     def execute_dup(self):
         self.data_path.signal_push(
@@ -227,7 +234,7 @@ class ControlUnit:
             )
         )
         self.tick()
-        self.data_path.signal_push(
+        self.data_path.signal_write_first(
             self.data_path.signal_read_memory()
         )
         self.tick()
@@ -302,20 +309,21 @@ class ControlUnit:
         stack_repr = f"DATA_STACK: {self.data_path.stack}"
         instr_repr = str(self.data_path.memory[self.data_path.pc])
 
-        return f"{state_repr} \n\t{stack_repr} \n\t{instr_repr}"
+        return f"{state_repr} \t{stack_repr} \t{instr_repr}"
 
 
 
 def simulation(
-    code: dict, input_tokens, limit
+    code_raw: dict, input_tokens, limit
 ) -> tuple[str, int, int]:
     alu = ALU()
     io = IO(input_tokens)
     ios = {801: io}
+    code = list(map(Instruction.from_dict, code_raw["code"]))
     data_path = DataPath(
-        alu, code["code"], ios
+        alu, code, ios
     )
-    data_path.signal_latch_pc(code["start"])
+    data_path.signal_latch_pc(code_raw["start"])
     control_unit = ControlUnit(data_path)
     instr_counter = 0
     logging.debug("%s", control_unit)
@@ -346,7 +354,7 @@ def main(code_filename: str, input_filename: str):
         code, input_token, limit=1000
     )
     print("".join(output))
-    print("instr_counter: ", instr_counter, "ticks:", ticks)
+    print("instr_counter: ", instr_counter, "ticks: ", ticks)
 
 
 if __name__ == "__main__":
