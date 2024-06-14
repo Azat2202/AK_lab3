@@ -171,10 +171,12 @@ class ControlUnit:
         return self._tick
 
     def decode_and_execute_instruction(self):
+        self.data_path.signal_latch_ar(self.data_path.pc)
+        self.tick()
         instruction = self.data_path.signal_read_memory()
         assert isinstance(instruction, Instruction), "FAULT: Executing data!"
         self.tick()
-        self.data_path.signal_latch_ar(self.data_path.pc + 1)
+        self.data_path.signal_latch_pc(self.data_path.pc + 1)
         self.tick()
         self.executors[Opcode[instruction.opcode]](instruction)
 
