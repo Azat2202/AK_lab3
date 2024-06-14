@@ -38,6 +38,9 @@ class Instruction:
         data = asdict(self)
         return {key: value for key, value in data.items() if value is not None}
 
+    def __str__(self):
+        return self.to_dict()
+
 
 class CustomEncoder(json.JSONEncoder):
     def default(self, o):

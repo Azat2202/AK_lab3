@@ -292,6 +292,16 @@ class ControlUnit:
     def execute_halt(self):
         raise StopIteration
 
+    def __repr__(self):
+        state_repr = (f"TICK: {self.current_tick():4} "
+                      f"PC: {self.data_path.pc:4} "
+                      f"AR: {self.data_path.ar:4} "
+                      f"Z_FLAG: {self.data_path.alu.z_flag:1} ")
+        stack_repr = f"DATA_STACK: {self.data_path.stack}"
+        instr_repr = str(self.data_path.memory[self.data_path.pc])
+
+        return f"{state_repr} \n\t{stack_repr} \n\t{instr_repr}"
+
 
 
 def simulation(
