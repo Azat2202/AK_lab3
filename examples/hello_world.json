@@ -68,15 +68,18 @@
       "opcode": "load"
     },
     {
+      "opcode": "test"
+    },
+    {
       "opcode": "push",
-      "arg": 24
+      "arg": 25
     },
     {
       "opcode": "jz"
     },
     {
       "opcode": "push",
-      "arg": 2049
+      "arg": 101
     },
     {
       "opcode": "save"

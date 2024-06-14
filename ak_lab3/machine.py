@@ -114,6 +114,7 @@ class DataPath:
     def signal_write_memory(self, value: int):
         if self.ar in self.mmio:
             self.mmio[self.ar].write_byte(value)
+            return
         self.memory[self.ar] = value
 
     def signal_latch_ar(self, value: int):
@@ -175,6 +176,8 @@ class ControlUnit:
             self.execute_single_operand_alu_operation(instruction)
         elif instruction.opcode in [Opcode.ADD, Opcode.SUB, Opcode.DIV, Opcode.XOR, Opcode.MUL]:
             self.execute_double_operand_alu_operation(instruction)
+        elif instruction.opcode == Opcode.TEST:
+            self.execute_test()
         elif instruction.opcode == Opcode.JUMP:
             self.execute_jump()
         elif instruction.opcode == Opcode.JZ:
@@ -259,24 +262,28 @@ class ControlUnit:
 
     def execute_single_operand_alu_operation(self, instruction: Instruction):
         assert instruction.opcode in AluOperation
-        self.data_path.signal_write_second(
+        self.data_path.signal_write_first(
             self.data_path.perform_alu_operation(
-                AluOperation[instruction.opcode], AluInputMux.TOS, AluInputMux.ZERO
+                AluOperation[instruction.opcode.upper()], AluInputMux.TOS, AluInputMux.ZERO
             )
         )
-        self.tick()
-        self.data_path.signal_pop()
         self.tick()
 
     def execute_double_operand_alu_operation(self, instruction: Instruction):
         assert instruction.opcode in AluOperation
         self.data_path.signal_write_second(
             self.data_path.perform_alu_operation(
-                AluOperation[instruction.opcode], AluInputMux.TOS, AluInputMux.TOS
+                AluOperation[instruction.opcode.upper()], AluInputMux.TOS, AluInputMux.TOS
             )
         )
         self.tick()
         self.data_path.signal_pop()
+        self.tick()
+
+    def execute_test(self):
+        self.data_path.perform_alu_operation(
+            AluOperation.XOR, AluInputMux.TOS, AluInputMux.ZERO
+        )
         self.tick()
 
     def execute_jump(self):
@@ -292,6 +299,9 @@ class ControlUnit:
     def execute_jz(self):
         if self.data_path.alu.z_flag:
             self.execute_jump()
+        else:
+            self.data_path.signal_pop()
+            self.tick()
 
     def execute_push(self, instruction: Instruction):
         assert instruction.arg is not None and isinstance(instruction.arg, int)
@@ -309,7 +319,7 @@ class ControlUnit:
         stack_repr = f"DATA_STACK: {self.data_path.stack}"
         instr_repr = str(self.data_path.memory[self.data_path.pc])
 
-        return f"{state_repr} \t{stack_repr} \t{instr_repr}"
+        return f"{state_repr} \t{instr_repr:32} \t{stack_repr} "
 
 
 
@@ -318,7 +328,7 @@ def simulation(
 ) -> tuple[str, int, int]:
     alu = ALU()
     io = IO(input_tokens)
-    ios = {801: io}
+    ios = {101: io}
     code = list(map(Instruction.from_dict, code_raw["code"]))
     data_path = DataPath(
         alu, code, ios

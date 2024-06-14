@@ -23,6 +23,7 @@ class Opcode(StrEnum):
     PUSH = auto()
     WORD = auto()
     HALT = auto()
+    TEST = auto()
 
 @dataclass
 class Instruction:
