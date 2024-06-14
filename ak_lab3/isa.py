@@ -27,17 +27,10 @@ class Opcode(str, Enum):
     def __str__(self):
         return self.value
 
-
-class ArgType(str, Enum):
-    IMPL = "implicit"
-    ADDR = "address"
-
-
 @dataclass
 class Instruction:
     opcode: Opcode
     arg: Optional[int | str] = None
-    arg_type: Optional[ArgType] = None
 
     def to_dict(self):
         # exclude None fields

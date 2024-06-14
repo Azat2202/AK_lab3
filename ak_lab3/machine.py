@@ -3,8 +3,9 @@ import sys
 from collections import deque
 from enum import StrEnum, auto
 from queue import Queue
+from typing import Callable, Optional
 
-from ak_lab3.isa import read_code, Instruction
+from ak_lab3.isa import read_code, Instruction, Opcode
 
 
 class AluOperation(StrEnum):
@@ -80,11 +81,12 @@ class DataPath:
         alu: ALU,
         data_memory_size: int,
         stack_size: int,
+        program: list[Instruction],
         mmio: dict[int, IO],
         start: int,
     ):
         self.memory_size = data_memory_size
-        self.memory = [0] * data_memory_size
+        self.memory = program + [0] * (data_memory_size - len(program))
         self.stack_size = stack_size
         self.stack = [0] * stack_size
         self.mmio = mmio
@@ -100,7 +102,7 @@ class DataPath:
     def signal_write_second(self, value: int):
         self.stack[-2] = value
 
-    def signal_read_memory(self) -> int:
+    def signal_read_memory(self) -> dict | int:
         if self.ar in self.mmio:
             return self.mmio[self.ar].read_byte()
         return self.memory[self.ar]
@@ -110,7 +112,7 @@ class DataPath:
             self.mmio[self.ar].write_byte(value)
         self.memory[self.ar] = value
 
-    def latch_ar(self, value: int):
+    def signal_latch_ar(self, value: int):
         self.ar = value
 
     def perform_alu_operation(
@@ -130,20 +132,35 @@ class DataPath:
 class ControlUnit:
     _tick: int
 
-    def __init__(self, program: dict, data_path: DataPath):
-        self.program = program
-        self.program_counter = 0
+    def __init__(self, data_path: DataPath):
         self.data_path = data_path
         self._tick = 0
+        self.executors: dict[str, Callable[[dict], None]] = {
+            Opcode.PUSH: self.execute_push
+        }
 
-
-    def decode_and_execute_instruction(self): ...
 
     def tick(self):
-        self.tick += 1
+        self._tick += 1
 
     def current_tick(self) -> int:
         return self._tick
+
+    def decode_and_execute_instruction(self):
+        instruction = self.data_path.signal_read_memory()
+        assert isinstance(instruction, dict), "FAULT: Executing data!"
+        self.tick()
+        self.data_path.signal_latch_ar(self.data_path.ar + 1)
+        self.tick()
+        opcode: str = instruction["opcode"]
+        self.executors[Opcode[opcode]](instruction)
+
+    def execute_push(self, instruction: dict):
+
+        print("Pushed!")
+
+
+
 
 
 
@@ -156,8 +173,8 @@ def simulation(code: dict, input_tokens, data_memory_size, stack_size, limit) ->
     alu = ALU()
     io = IO(input_tokens)
     ios = {801: io}
-    data_path = DataPath(alu, data_memory_size, stack_size, ios, code["start"])
-    control_unit = ControlUnit(code["code"], data_path)
+    data_path = DataPath(alu, data_memory_size, stack_size, code["code"], ios, code["start"])
+    control_unit = ControlUnit(data_path)
     instr_counter = 0
     logging.debug("%s", control_unit)
     try:
