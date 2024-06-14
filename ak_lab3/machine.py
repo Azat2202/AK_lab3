@@ -2,7 +2,6 @@ import logging
 import sys
 from collections import deque
 from enum import StrEnum, auto
-from typing import Callable, Union
 
 from ak_lab3.isa import read_code, Instruction, Opcode
 
@@ -70,7 +69,7 @@ class IO:
     def read_byte(self) -> int:
         if len(self.input_buffer) == 0:
             raise EOFError("Input is over")
-        return self.input_buffer.pop()
+        return self.input_buffer.popleft()
 
     def __repr__(self) -> str:
         return f"{map(chr, self.input_buffer)}, {self.output}"
@@ -107,8 +106,9 @@ class DataPath:
     def signal_read_memory(self) -> Instruction | int:
         if self.ar in self.mmio:
             return self.mmio[self.ar].read_byte()
-        if self.memory[self.ar].opcode == Opcode.WORD:
-            return self.memory[self.ar].arg
+        if isinstance(self.memory[self.ar], Instruction):
+            if self.memory[self.ar].opcode == Opcode.WORD:
+                return self.memory[self.ar].arg
         return self.memory[self.ar]
 
     def signal_write_memory(self, value: int):
@@ -357,9 +357,7 @@ def main(code_filename: str, input_filename: str):
     code = read_code(code_filename)
     with open(input_filename, encoding="utf-8") as file:
         input_text = file.read()
-        input_token = []
-        for char in input_text:
-            input_token.append(char)
+        input_token = list(map(ord, input_text))
     output, instr_counter, ticks = simulation(
         code, input_token, limit=1000
     )

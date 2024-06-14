@@ -14,8 +14,8 @@ pylint = "^3.2.3"
 mypy = "^1.10.0"
 
 [tool.poetry.scripts]
-main = "ak_lab3.__main__:main"
-translator = "ak_lab3.translator:"
+translator = "ak_lab3.translator"
+machine = "ak_lab3.machine"
 
 [tool.poe.tasks]
 _pylint = "pylint ak_lab3 tests"
