@@ -15,7 +15,7 @@ def parse_opcode(code: str) -> Opcode:
 def parse_word_data(data: str) -> list[Instruction]:
     if data.startswith("0x"):
         return [Instruction(Opcode.WORD, data[2:])]
-    return [Instruction(Opcode.WORD, ord(ch)) for ch in data.strip('"')]
+    return [Instruction(Opcode.WORD, ord(ch)) for ch in data.strip('"') + "\0"]
 
 
 def preprocess(input_data: AnyStr):

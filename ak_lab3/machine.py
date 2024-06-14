@@ -294,7 +294,6 @@ class ControlUnit:
 
 
 
-
 def simulation(
     code: dict, input_tokens, limit
 ) -> tuple[str, int, int]:

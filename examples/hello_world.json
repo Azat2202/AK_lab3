@@ -1,5 +1,5 @@
 {
-  "start": 13,
+  "start": 14,
   "code": [
     {
       "opcode": "word",
@@ -54,6 +54,10 @@
       "arg": 33
     },
     {
+      "opcode": "word",
+      "arg": 0
+    },
+    {
       "opcode": "push",
       "arg": 0
     },
@@ -65,7 +69,7 @@
     },
     {
       "opcode": "push",
-      "arg": 23
+      "arg": 24
     },
     {
       "opcode": "jz"
@@ -82,7 +86,7 @@
     },
     {
       "opcode": "push",
-      "arg": 14
+      "arg": 15
     },
     {
       "opcode": "jump"
