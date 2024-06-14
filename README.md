@@ -95,41 +95,46 @@ number ::= 0x <any of "0-9 ABCDEF">
 
 [//]: # (https://asciiflow.com/#/share/eJzFVstKw0AU%2FZUwK7UtfWwK3YkrwVJQAy6CZWhHW0yTkk6xtVSk%2BAkh%2BhGuupR%2BTb7ESTNJk3nkMVl4Ccm9meQ87syEbIAFZwj0rKVp1oEJ18gBPbAxwMoAvXar1akbYE3STrdLMoxWmBQG0Gj47qHIoSmEYVgJlsQAgz1fLiaVcMcQQ56Fi7I%2BOZ4FhqMXgX57Hgwik%2BeTFNm9kVanW300s521GirV7f2KZpbV7H990sccBMc8R6meBnmf91S5T0Gup9SWm%2BqUz1dn6iAh8%2F3gLsxzmbQHkSkFn5SNB2L4mUGFVX7WOleZT%2FY%2Bp4WcrweZjo%2F3E4NRHShKhQg7p5u%2Bd6AncS3HVumh4D1ho7gdwPLHavfsc4QJ23Of7t9dXw9W2i7GCOvT6ligkW2NMzl4LSc3ru9%2B%2BO7PEYsk39Xc5DVSttcFBLluZLheqr0FcAstBSGb1Gzp%2FtHL5W30djS9JsSjyRA6MadBIpk1w6JZzqO3L%2BqRIYzo3oZPJnyW8jF5rZ3AfW%2FUmheP4QKPwC9v9BC38L7kCLMmI2WLiGm0U8a4BmaRaHQHiqCTAHkGinAVMyQAY0LKEX6B4q9QNvL%2FHqW%2BLtJIN0jSrkJ4Ai3RD5dQY0UuQV0d8cq2sGObGvfDUVWpbk2xULkinrRWwCux5HKYwBZs%2FwD5cyhO&#41;)
 ```
-        +-----------+                                                    
-        |           +----push                                            
-        |   data    +----write_second            +----------+            
-        |   stack   +----pop   sel               |          |            
-        |           |           |                |  Memory  |            
-        |           |         +-v-+              |          |<-- read    
-        +-----------+         | M |              |          |            
-        |           |         | U +----------+---+          |<-- wrire   
-        |    TOS  | |<--------+ X |          |   |          |            
-        |         | |         |   |<---+     |   +----------+            
-    (0) ++--------+-+         +---+    |     |   |   IO     |            
-      |  |        |  |(0)              |     |   |          |            
-      v  v        v  v                 |     |   +----------+            
-     +----+      +----+                |     |          ^                
-top->|MUX |      |MUX |<--second       |     |          |                
-     +--+-+      +-+--+                |     |          +------+         
-        |          |                   |     |          |      |         
-        v          v                   |     |    +-----+----+ |         
-      -------    ------                |     |    |    AR    |<+-latch_ar
-      \      \  /      /               |     |    +----^-----+ |         
-       \      \/      /z_flag          |     |         |       +1        
-~-+/*^->\    ALU     /-----------+     |     |      +--+----+  |         
- +1 -1   \          /            |     |     |      |  MUX  |  |         
-          --+-------             |     |     |      +-------+  |         
-            |                    |     |     |        ^  ^ ^   |         
-            |                    |     |     |        |  | |   |         
-            +--------------------+-----+-----+--------+  | +---+         
-                                 |           |           |               
-                           +-----v-------+   |           |               
-                           |             |   |           |               
-                           |   Control   |<--+           |               
-                           |    Unit     |               |               
-                           |             +---------------+               
-                           +-------------+                               
-```                         
+                                                    +----------+                 
+                                                    |          |                 
+           +-----------+                            |  Memory  |                 
+  push ----+           |                            |          |<-- read         
+           |   data    |                      dt_out|          |                 
+  pop------+   stack   |          sel        +------+          |<-- wrire        
+           |           |           |         | dt_in|          |                 
+wr_second--+           |         +-v-+       |  +-->+----------+                 
+           +-----------+         | M |       |  |   |   IO     |                 
+wr_first---+           |         | U +-------+  |   |          |                 
+           |    TOS  | |<--------+ X |       |  |   +----------+                 
+           |         | |         |   |<---+  |  |        ^ address               
+       (0) ++--------+-+         +---+    |  |  |        |                       
+         |  |        |  |(0)              |  |  |      +-+----+                  
+         v  v        v  v                 |  |  |      |  AR  | <--latch_ar      
+        +----+      +----+                |  |  |      +------+                  
+   top->|MUX |      |MUX |<--second       |  |  |        ^                       
+        +--+-+      +-+--+                |  |  |        |                       
+           |          |                   |  |  |    +---+----+                  
+           v          v                   |  |  |    |   MUX  |                  
+         -------    ------                |  |  |    +--------+                  
+         \      \  /      /               |  |  |      ^     ^    +----+         
+          \      \/      /z_flag          |  |  |      |     |    |    |         
+   ~-+/*^->\    ALU     /--+              |  |  |      |    ++----++   | latch_pc
+    +1 -1   \          /   |              |  |  |      |    |  PC  | <-+------   
+             --+-------    |              |  |  |      |    +------+   |         
+               |           |              |  |  |      |       ^       +1        
+               |           |              |  |  |      |       |       |         
+               +-----------+--------------+--+--+------+    +--+---+   |         
+                           |                 |         |    | MUX  |   |         
+                           |                 |         |    +------+   |         
+                           |                 |         |     ^  ^ ^    |         
+                           v                 |         |     |  | +- --+         
+                      +-------------+ instr  |         +-----+  |                
+                      |             +--------+                  |                
+                      |   Control   |                           |                
+                      |    Unit     +---------------------------+                
+                      |             |address                                     
+                      +-------------+                                            
+```
 
 ### Control Unit
 

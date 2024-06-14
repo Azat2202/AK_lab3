@@ -2,8 +2,7 @@ import logging
 import sys
 from collections import deque
 from enum import StrEnum, auto
-from queue import Queue
-from typing import Callable, Optional
+from typing import Callable
 
 from ak_lab3.isa import read_code, Instruction, Opcode
 
@@ -18,6 +17,8 @@ class AluOperation(StrEnum):
     INC = auto()
     DEC = auto()
 
+DATA_MEMORY_SIZE = 100
+STACK_SIZE = 100
 
 class AluInputMux(StrEnum):
     ZERO = auto()
@@ -76,22 +77,22 @@ class IO:
 
 
 class DataPath:
+    memory: list[Instruction | int]
+    stack: list[int]
+    mmio: dict[int, IO]
+    pc: int
+    ar: int
+
     def __init__(
         self,
         alu: ALU,
-        data_memory_size: int,
-        stack_size: int,
         program: list[Instruction],
-        mmio: dict[int, IO],
-        start: int,
+        mmio: dict[int, IO]
     ):
-        self.memory_size = data_memory_size
-        self.memory = program + [0] * (data_memory_size - len(program))
-        self.stack_size = stack_size
-        self.stack = [0] * stack_size
+        self.memory = program + [0] * (MEMORY_SIZE - len(program))
+        self.stack = [0] * STACK_SIZE
         self.mmio = mmio
         self.alu = alu
-        self.ar = start
 
     def signal_stack_pop(self):
         self.stack.pop()
@@ -102,18 +103,24 @@ class DataPath:
     def signal_write_second(self, value: int):
         self.stack[-2] = value
 
-    def signal_read_memory(self) -> dict | int:
-        if self.ar in self.mmio:
-            return self.mmio[self.ar].read_byte()
-        return self.memory[self.ar]
+    def signal_write_first(self, value: int):
+        self.stack[-1] = value
+
+    def signal_read_memory(self) -> Instruction | int:
+        if self.pc in self.mmio:
+            return self.mmio[self.pc].read_byte()
+        return self.memory[self.pc]
 
     def signal_write_memory(self, value: int):
-        if self.ar in self.mmio:
-            self.mmio[self.ar].write_byte(value)
-        self.memory[self.ar] = value
+        if self.pc in self.mmio:
+            self.mmio[self.pc].write_byte(value)
+        self.memory[self.pc] = value
 
     def signal_latch_ar(self, value: int):
         self.ar = value
+
+    def signal_latch_pc(self, value: int):
+        self.pc = value
 
     def perform_alu_operation(
         self, alu_operation: AluOperation, left: AluInputMux, right: AluInputMux
@@ -129,6 +136,8 @@ class DataPath:
         return self.stack[-2]
 
 
+
+
 class ControlUnit:
     _tick: int
 
@@ -138,7 +147,6 @@ class ControlUnit:
         self.executors: dict[str, Callable[[dict], None]] = {
             Opcode.PUSH: self.execute_push
         }
-
 
     def tick(self):
         self._tick += 1
@@ -150,7 +158,7 @@ class ControlUnit:
         instruction = self.data_path.signal_read_memory()
         assert isinstance(instruction, dict), "FAULT: Executing data!"
         self.tick()
-        self.data_path.signal_latch_ar(self.data_path.ar + 1)
+        self.data_path.signal_latch_ar(self.data_path.pc + 1)
         self.tick()
         opcode: str = instruction["opcode"]
         self.executors[Opcode[opcode]](instruction)
@@ -160,20 +168,20 @@ class ControlUnit:
         print("Pushed!")
 
 
-
-
-
-
-
 STACK_SIZE = 254
 MEMORY_SIZE = 1024
 
 
-def simulation(code: dict, input_tokens, data_memory_size, stack_size, limit) -> tuple[str, int, int]:
+def simulation(
+    code: dict, input_tokens, limit
+) -> tuple[str, int, int]:
     alu = ALU()
     io = IO(input_tokens)
     ios = {801: io}
-    data_path = DataPath(alu, data_memory_size, stack_size, code["code"], ios, code["start"])
+    data_path = DataPath(
+        alu, code["code"], ios
+    )
+    data_path.signal_latch_pc(code["start"])
     control_unit = ControlUnit(data_path)
     instr_counter = 0
     logging.debug("%s", control_unit)
@@ -193,15 +201,15 @@ def simulation(code: dict, input_tokens, data_memory_size, stack_size, limit) ->
     return io.output, instr_counter, control_unit.current_tick()
 
 
-def main(code_file: str, input_file: str):
-    code = read_code(code_file)
-    with open(input_file, encoding="utf-8") as file:
+def main(code_filename: str, input_filename: str):
+    code = read_code(code_filename)
+    with open(input_filename, encoding="utf-8") as file:
         input_text = file.read()
         input_token = []
         for char in input_text:
             input_token.append(char)
     output, instr_counter, ticks = simulation(
-        code, input_token, data_memory_size=100, stack_size=100, limit=1000
+        code, input_token, limit=1000
     )
     print("".join(output))
     print("instr_counter: ", instr_counter, "ticks:", ticks)

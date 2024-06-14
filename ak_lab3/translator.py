@@ -1,7 +1,7 @@
 import sys
 from typing import AnyStr
 
-from ak_lab3.isa import Instruction, Opcode, ArgType, write_code
+from ak_lab3.isa import Instruction, Opcode, write_code
 
 
 def remove_comment(line: str) -> str:
@@ -39,9 +39,8 @@ def translate_stage_1(input_data: str) -> tuple[list[Instruction], dict[str, int
         elif line.count(" ") == 0:
             code.append(Instruction(parse_opcode(line)))
         elif line.startswith("PUSH"):
-            op, label_name = line.split(" ", 2)
-            arg_type = ArgType.IMPL if label_name.startswith("0x") else ArgType.ADDR
-            code.append(Instruction(parse_opcode(op), label_name, arg_type))
+            op, arg = line.split(" ", 2)
+            code.append(Instruction(parse_opcode(op), arg))
         elif line.startswith("WORD"):
             _, data = line.split(" ", 1)
             code += parse_word_data(data)
@@ -54,7 +53,8 @@ def translate_stage_2(
     for i, instr in enumerate(code):
         if instr.opcode != Opcode.PUSH:
             continue
-        if instr.arg_type != ArgType.ADDR:
+        if isinstance(instr.arg, str) and instr.arg.startswith("0x"):
+            instr.arg = int(instr.arg, 16)
             continue
         assert code[i].arg in labels, f"None such label: {code[i].arg}"
         code[i].arg = labels[str(code[i].arg)]
