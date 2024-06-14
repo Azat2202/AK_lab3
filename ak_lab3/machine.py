@@ -2,7 +2,7 @@ import logging
 import sys
 from collections import deque
 from enum import StrEnum, auto
-from typing import Callable
+from typing import Callable, Union
 
 from ak_lab3.isa import read_code, Instruction, Opcode
 
@@ -17,12 +17,12 @@ class AluOperation(StrEnum):
     INC = auto()
     DEC = auto()
 
-DATA_MEMORY_SIZE = 100
-STACK_SIZE = 100
-
 class AluInputMux(StrEnum):
     ZERO = auto()
     TOS = auto()
+
+DATA_MEMORY_SIZE = 100
+STACK_SIZE = 100
 
 
 class ALU:
@@ -89,12 +89,12 @@ class DataPath:
         program: list[Instruction],
         mmio: dict[int, IO]
     ):
-        self.memory = program + [0] * (MEMORY_SIZE - len(program))
+        self.memory = program + [0] * (DATA_MEMORY_SIZE - len(program))
         self.stack = [0] * STACK_SIZE
         self.mmio = mmio
         self.alu = alu
 
-    def signal_stack_pop(self):
+    def signal_pop(self):
         self.stack.pop()
 
     def signal_push(self, value: int):
@@ -144,8 +144,24 @@ class ControlUnit:
     def __init__(self, data_path: DataPath):
         self.data_path = data_path
         self._tick = 0
-        self.executors: dict[str, Callable[[dict], None]] = {
-            Opcode.PUSH: self.execute_push
+        self.executors: dict[str, Union[Callable[[Instruction], None], Callable[[], None]]] = {
+            Opcode.DUP: self.execute_dup,
+            Opcode.OVER: self.execute_over,
+            Opcode.POP: self.execute_pop,
+            Opcode.SWAP: self.execute_swap,
+            Opcode.LOAD: self.execute_load,
+            Opcode.SAVE: self.execute_save,
+            Opcode.INC: self.execute_single_operand_alu_operation,
+            Opcode.DEC: self.execute_single_operand_alu_operation,
+            Opcode.ADD: self.execute_double_operand_alu_operation,
+            Opcode.SUB: self.execute_double_operand_alu_operation,
+            Opcode.DIV: self.execute_double_operand_alu_operation,
+            Opcode.XOR: self.execute_double_operand_alu_operation,
+            Opcode.MUL: self.execute_double_operand_alu_operation,
+            Opcode.JUMP: self.execute_jump,
+            Opcode.JZ: self.execute_jz,
+            Opcode.PUSH: self.execute_push,
+            Opcode.HALT: self.execute_halt,
         }
 
     def tick(self):
@@ -156,20 +172,127 @@ class ControlUnit:
 
     def decode_and_execute_instruction(self):
         instruction = self.data_path.signal_read_memory()
-        assert isinstance(instruction, dict), "FAULT: Executing data!"
+        assert isinstance(instruction, Instruction), "FAULT: Executing data!"
         self.tick()
         self.data_path.signal_latch_ar(self.data_path.pc + 1)
         self.tick()
-        opcode: str = instruction["opcode"]
-        self.executors[Opcode[opcode]](instruction)
+        self.executors[Opcode[instruction.opcode]](instruction)
 
-    def execute_push(self, instruction: dict):
+    def execute_dup(self):
+        self.data_path.signal_push(
+            self.data_path.perform_alu_operation(
+                AluOperation.ADD, AluInputMux.TOS, AluInputMux.ZERO
+            )
+        )
+        self.tick()
 
-        print("Pushed!")
+    def execute_over(self):
+        self.data_path.signal_push(
+            self.data_path.perform_alu_operation(
+                AluOperation.ADD, AluInputMux.ZERO, AluInputMux.TOS
+            )
+        )
+        self.tick()
+
+    def execute_pop(self):
+        self.data_path.signal_pop()
+        self.tick()
+
+    def execute_swap(self):
+        self.data_path.signal_write_first(
+            self.data_path.perform_alu_operation(
+                AluOperation.XOR, AluInputMux.TOS, AluInputMux.TOS
+            )
+        )
+        self.tick()
+        self.data_path.signal_write_second(
+            self.data_path.perform_alu_operation(
+                AluOperation.XOR, AluInputMux.TOS, AluInputMux.TOS
+            )
+        )
+        self.tick()
+        self.data_path.signal_write_first(
+            self.data_path.perform_alu_operation(
+                AluOperation.XOR, AluInputMux.TOS, AluInputMux.TOS
+            )
+        )
+        self.tick()
+
+    def execute_load(self):
+        self.data_path.signal_latch_ar(
+            self.data_path.perform_alu_operation(
+                AluOperation.ADD, AluInputMux.TOS, AluInputMux.ZERO
+            )
+        )
+        self.tick()
+        self.data_path.signal_push(
+            self.data_path.signal_read_memory()
+        )
+        self.tick()
+
+    def execute_save(self):
+        self.data_path.signal_latch_ar(
+            self.data_path.perform_alu_operation(
+                AluOperation.ADD, AluInputMux.TOS, AluInputMux.ZERO
+            )
+        )
+        self.tick()
+        self.data_path.signal_pop()
+        self.tick()
+        self.data_path.signal_write_memory(
+            self.data_path.perform_alu_operation(
+                AluOperation.ADD, AluInputMux.TOS, AluInputMux.ZERO
+            )
+        )
+        self.tick()
+        self.data_path.signal_pop()
+        self.tick()
+
+    def execute_single_operand_alu_operation(self, instruction: Instruction):
+        assert instruction.opcode in AluOperation
+        self.data_path.signal_write_second(
+            self.data_path.perform_alu_operation(
+                AluOperation[instruction.opcode], AluInputMux.TOS, AluInputMux.ZERO
+            )
+        )
+        self.tick()
+        self.data_path.signal_pop()
+        self.tick()
+
+    def execute_double_operand_alu_operation(self, instruction: Instruction):
+        assert instruction.opcode in AluOperation
+        self.data_path.signal_write_second(
+            self.data_path.perform_alu_operation(
+                AluOperation[instruction.opcode], AluInputMux.TOS, AluInputMux.TOS
+            )
+        )
+        self.tick()
+        self.data_path.signal_pop()
+        self.tick()
+
+    def execute_jump(self):
+        self.data_path.signal_latch_pc(
+            self.data_path.perform_alu_operation(
+                AluOperation.ADD, AluInputMux.TOS, AluInputMux.ZERO
+            )
+        )
+        self.tick()
+        self.data_path.signal_pop()
+        self.tick()
+
+    def execute_jz(self):
+        if self.data_path.alu.z_flag:
+            self.execute_jump()
+
+    def execute_push(self, instruction: Instruction):
+        assert instruction.arg is not None and isinstance(instruction.arg, int)
+        self.data_path.signal_push(instruction.arg)
+        self.tick()
+
+    def execute_halt(self):
+        raise StopIteration
 
 
-STACK_SIZE = 254
-MEMORY_SIZE = 1024
 
 
 def simulation(
