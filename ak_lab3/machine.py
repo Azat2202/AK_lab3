@@ -16,9 +16,11 @@ class AluOperation(StrEnum):
     INC = auto()
     DEC = auto()
 
+
 class AluInputMux(StrEnum):
     ZERO = auto()
     TOS = auto()
+
 
 DATA_MEMORY_SIZE = 100
 STACK_SIZE = 100
@@ -79,12 +81,7 @@ class DataPath:
     pc: int = 0
     ar: int = 0
 
-    def __init__(
-        self,
-        alu: ALU,
-        program: list[Instruction],
-        mmio: dict[int, IO]
-    ):
+    def __init__(self, alu: ALU, program: list[Instruction], mmio: dict[int, IO]):
         self.memory = program + [0] * (DATA_MEMORY_SIZE - len(program))
         self.stack: list[int] = []
         self.mmio = mmio
@@ -106,10 +103,13 @@ class DataPath:
     def signal_read_memory(self) -> Instruction | int:
         if self.ar in self.mmio:
             return self.mmio[self.ar].read_byte()
-        if isinstance(self.memory[self.ar], Instruction):
-            if self.memory[self.ar].opcode == Opcode.WORD:
-                return self.memory[self.ar].arg
-        return self.memory[self.ar]
+        instruction = self.memory[self.ar]
+        if isinstance(instruction, Instruction):
+            if instruction.opcode == Opcode.WORD:
+                assert instruction.arg is not None, "WORD with None argument! Check translator"
+                assert isinstance(instruction.arg, int)
+                return instruction.arg
+        return instruction
 
     def signal_write_memory(self, value: int):
         if self.ar in self.mmio:
@@ -135,8 +135,6 @@ class DataPath:
 
     def _get_second(self):
         return self.stack[-2]
-
-
 
 
 class ControlUnit:
@@ -174,7 +172,13 @@ class ControlUnit:
             self.execute_save()
         elif instruction.opcode in [Opcode.INC, Opcode.DEC]:
             self.execute_single_operand_alu_operation(instruction)
-        elif instruction.opcode in [Opcode.ADD, Opcode.SUB, Opcode.DIV, Opcode.XOR, Opcode.MUL]:
+        elif instruction.opcode in [
+            Opcode.ADD,
+            Opcode.SUB,
+            Opcode.DIV,
+            Opcode.XOR,
+            Opcode.MUL,
+        ]:
             self.execute_double_operand_alu_operation(instruction)
         elif instruction.opcode == Opcode.TEST:
             self.execute_test()
@@ -188,7 +192,6 @@ class ControlUnit:
             self.execute_halt()
         else:
             raise NotImplementedError
-
 
     def execute_dup(self):
         self.data_path.signal_push(
@@ -237,9 +240,7 @@ class ControlUnit:
             )
         )
         self.tick()
-        self.data_path.signal_write_first(
-            self.data_path.signal_read_memory()
-        )
+        self.data_path.signal_write_first(self.data_path.signal_read_memory())
         self.tick()
 
     def execute_save(self):
@@ -264,7 +265,9 @@ class ControlUnit:
         assert instruction.opcode in AluOperation
         self.data_path.signal_write_first(
             self.data_path.perform_alu_operation(
-                AluOperation[instruction.opcode.upper()], AluInputMux.TOS, AluInputMux.ZERO
+                AluOperation[instruction.opcode.upper()],
+                AluInputMux.TOS,
+                AluInputMux.ZERO,
             )
         )
         self.tick()
@@ -273,7 +276,9 @@ class ControlUnit:
         assert instruction.opcode in AluOperation
         self.data_path.signal_write_second(
             self.data_path.perform_alu_operation(
-                AluOperation[instruction.opcode.upper()], AluInputMux.TOS, AluInputMux.TOS
+                AluOperation[instruction.opcode.upper()],
+                AluInputMux.TOS,
+                AluInputMux.TOS,
             )
         )
         self.tick()
@@ -312,27 +317,24 @@ class ControlUnit:
         raise StopIteration
 
     def __repr__(self):
-        state_repr = (f"TICK: {self.current_tick():4} "
-                      f"PC: {self.data_path.pc:4} "
-                      f"AR: {self.data_path.ar:4} "
-                      f"Z_FLAG: {self.data_path.alu.z_flag:1} ")
+        state_repr = (
+            f"TICK: {self.current_tick():4} "
+            f"PC: {self.data_path.pc:4} "
+            f"AR: {self.data_path.ar:4} "
+            f"Z_FLAG: {self.data_path.alu.z_flag:1} "
+        )
         stack_repr = f"DATA_STACK: {self.data_path.stack}"
         instr_repr = str(self.data_path.memory[self.data_path.pc])
 
         return f"{state_repr} \t{instr_repr:32} \t{stack_repr} "
 
 
-
-def simulation(
-    code_raw: dict, input_tokens, limit
-) -> tuple[str, int, int]:
+def simulation(code_raw: dict, input_tokens, limit) -> tuple[str, int, int]:
     alu = ALU()
     io = IO(input_tokens)
     ios = {101: io}
     code = list(map(Instruction.from_dict, code_raw["code"]))
-    data_path = DataPath(
-        alu, code, ios
-    )
+    data_path = DataPath(alu, code, ios)
     data_path.signal_latch_pc(code_raw["start"])
     control_unit = ControlUnit(data_path)
     instr_counter = 0
@@ -358,9 +360,7 @@ def main(code_filename: str, input_filename: str):
     with open(input_filename, encoding="utf-8") as file:
         input_text = file.read()
         input_token = list(map(ord, input_text))
-    output, instr_counter, ticks = simulation(
-        code, input_token, limit=1000
-    )
+    output, instr_counter, ticks = simulation(code, input_token, limit=1000)
     print("".join(output))
     print("instr_counter: ", instr_counter, "ticks: ", ticks)
 

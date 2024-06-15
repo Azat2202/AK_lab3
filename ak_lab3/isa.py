@@ -25,6 +25,7 @@ class Opcode(StrEnum):
     HALT = auto()
     TEST = auto()
 
+
 @dataclass
 class Instruction:
     opcode: Opcode
@@ -37,11 +38,7 @@ class Instruction:
     @staticmethod
     def from_dict(data: dict):
         assert "opcode" in data, "Parsing Instruction failed! Check translator"
-        return Instruction(
-            data["opcode"],
-            data["arg"] if "arg" in data else None
-        )
-
+        return Instruction(data["opcode"], data["arg"] if "arg" in data else None)
 
     def __str__(self) -> str:
         return str(self.to_dict())
