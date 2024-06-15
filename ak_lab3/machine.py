@@ -1,6 +1,5 @@
 import argparse
 import logging
-import sys
 from collections import deque
 from enum import StrEnum, auto
 
@@ -67,7 +66,6 @@ class IO:
         self.output = ""
         self.input_buffer = deque(input_buffer)
 
-
     def write_byte(self, b: int):
         if self.is_int_io:
             self.output += str(b)
@@ -112,7 +110,9 @@ class DataPath:
         instruction = self.memory[self.ar]
         if isinstance(instruction, Instruction):
             if instruction.opcode == Opcode.WORD:
-                assert instruction.arg is not None, "WORD with None argument! Check translator"
+                assert (
+                    instruction.arg is not None
+                ), "WORD with None argument! Check translator"
                 assert isinstance(instruction.arg, int)
                 return instruction.arg
         return instruction
@@ -373,9 +373,15 @@ def main(code_filename: str, input_filename: str, is_int_io: str):
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
-    parser = argparse.ArgumentParser(description='Stack machine')
-    parser.add_argument('--iotype', type=str, nargs='?', help='"int" for int io output and str for str io output', default="str")
-    parser.add_argument('input_file', type=str, nargs=1, help='input_file')
-    parser.add_argument('output_file', type=str, nargs=1, help='output_file')
+    parser = argparse.ArgumentParser(description="Stack machine")
+    parser.add_argument(
+        "--iotype",
+        type=str,
+        nargs="?",
+        help='"int" for int io output and str for str io output',
+        default="str",
+    )
+    parser.add_argument("input_file", type=str, nargs=1, help="input_file")
+    parser.add_argument("output_file", type=str, nargs=1, help="output_file")
     args = parser.parse_args()
     main(args.input_file[0], args.output_file[0], args.iotype == "int")
