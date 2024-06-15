@@ -367,7 +367,7 @@ def main(code_filename: str, input_filename: str, is_int_io: str):
         input_text = file.read()
         input_token = list(map(ord, input_text + "\0"))
     output, instr_counter, ticks = simulation(code, input_token, is_int_io, limit=1000)
-    print("".join(output))
+    print("ouptut:", "".join(output))
     print("instr_counter: ", instr_counter, "ticks: ", ticks)
 
 
