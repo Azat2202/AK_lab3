@@ -158,6 +158,9 @@ class ControlUnit:
     def current_tick(self) -> int:
         return self._tick
 
+    def initialize_datapath(self, start: int):
+        self.data_path.signal_latch_pc(start)
+
     def decode_and_execute_instruction(self):
         self.data_path.signal_latch_ar(self.data_path.pc)
         self.tick()
@@ -343,8 +346,8 @@ def simulation(code_raw: dict, input_tokens, is_int_io, limit) -> tuple[str, int
     ios = {101: io}
     code = list(map(Instruction.from_dict, code_raw["code"]))
     data_path = DataPath(alu, code, ios)
-    data_path.signal_latch_pc(code_raw["start"])
     control_unit = ControlUnit(data_path)
+    control_unit.initialize_datapath(code_raw["start"])
     instr_counter = 0
     logging.debug("%s", control_unit)
     try:
