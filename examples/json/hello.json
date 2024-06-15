@@ -3,13 +3,11 @@
   "code": [
     {
       "opcode": "push",
-      "arg": "0x801",
-      "arg_type": "implicit"
+      "arg": 101
     },
     {
       "opcode": "push",
-      "arg": 53,
-      "arg_type": "address"
+      "arg": 57
     },
     {
       "opcode": "over"
@@ -21,9 +19,11 @@
       "opcode": "load"
     },
     {
+      "opcode": "test"
+    },
+    {
       "opcode": "push",
-      "arg": 12,
-      "arg_type": "address"
+      "arg": 13
     },
     {
       "opcode": "jz"
@@ -39,8 +39,7 @@
     },
     {
       "opcode": "push",
-      "arg": 2,
-      "arg_type": "address"
+      "arg": 2
     },
     {
       "opcode": "jump"
@@ -56,8 +55,7 @@
     },
     {
       "opcode": "push",
-      "arg": 77,
-      "arg_type": "address"
+      "arg": 83
     },
     {
       "opcode": "over"
@@ -66,9 +64,11 @@
       "opcode": "load"
     },
     {
+      "opcode": "test"
+    },
+    {
       "opcode": "push",
-      "arg": 25,
-      "arg_type": "address"
+      "arg": 27
     },
     {
       "opcode": "jz"
@@ -84,8 +84,7 @@
     },
     {
       "opcode": "push",
-      "arg": 16,
-      "arg_type": "address"
+      "arg": 17
     },
     {
       "opcode": "jump"
@@ -98,8 +97,7 @@
     },
     {
       "opcode": "push",
-      "arg": 70,
-      "arg_type": "address"
+      "arg": 75
     },
     {
       "opcode": "over"
@@ -111,9 +109,11 @@
       "opcode": "load"
     },
     {
+      "opcode": "test"
+    },
+    {
       "opcode": "push",
-      "arg": 38,
-      "arg_type": "address"
+      "arg": 41
     },
     {
       "opcode": "jz"
@@ -129,8 +129,7 @@
     },
     {
       "opcode": "push",
-      "arg": 42,
-      "arg_type": "address"
+      "arg": 30
     },
     {
       "opcode": "jump"
@@ -146,8 +145,7 @@
     },
     {
       "opcode": "push",
-      "arg": 77,
-      "arg_type": "address"
+      "arg": 83
     },
     {
       "opcode": "over"
@@ -159,9 +157,11 @@
       "opcode": "load"
     },
     {
+      "opcode": "test"
+    },
+    {
       "opcode": "push",
-      "arg": 52,
-      "arg_type": "address"
+      "arg": 56
     },
     {
       "opcode": "jz"
@@ -177,8 +177,7 @@
     },
     {
       "opcode": "push",
-      "arg": 42,
-      "arg_type": "address"
+      "arg": 45
     },
     {
       "opcode": "jump"
@@ -256,6 +255,10 @@
     },
     {
       "opcode": "word",
+      "arg": 0
+    },
+    {
+      "opcode": "word",
       "arg": 72
     },
     {
@@ -281,6 +284,10 @@
     {
       "opcode": "word",
       "arg": 32
+    },
+    {
+      "opcode": "word",
+      "arg": 0
     },
     {
       "opcode": "word",

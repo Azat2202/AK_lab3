@@ -359,7 +359,7 @@ def main(code_filename: str, input_filename: str):
     code = read_code(code_filename)
     with open(input_filename, encoding="utf-8") as file:
         input_text = file.read()
-        input_token = list(map(ord, input_text))
+        input_token = list(map(ord, input_text + "\0"))
     output, instr_counter, ticks = simulation(code, input_token, limit=1000)
     print("".join(output))
     print("instr_counter: ", instr_counter, "ticks: ", ticks)
