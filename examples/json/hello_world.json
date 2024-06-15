@@ -1,5 +1,5 @@
 {
-  "start": 13,
+  "start": 14,
   "code": [
     {
       "opcode": "word",
@@ -54,9 +54,12 @@
       "arg": 33
     },
     {
+      "opcode": "word",
+      "arg": 0
+    },
+    {
       "opcode": "push",
-      "arg": 0,
-      "arg_type": "address"
+      "arg": 0
     },
     {
       "opcode": "dup"
@@ -65,17 +68,18 @@
       "opcode": "load"
     },
     {
+      "opcode": "test"
+    },
+    {
       "opcode": "push",
-      "arg": 23,
-      "arg_type": "address"
+      "arg": 25
     },
     {
       "opcode": "jz"
     },
     {
       "opcode": "push",
-      "arg": "0x801",
-      "arg_type": "implicit"
+      "arg": 101
     },
     {
       "opcode": "save"
@@ -85,8 +89,7 @@
     },
     {
       "opcode": "push",
-      "arg": 14,
-      "arg_type": "address"
+      "arg": 15
     },
     {
       "opcode": "jump"

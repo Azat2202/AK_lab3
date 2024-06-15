@@ -1,48 +1,47 @@
 import json
 from dataclasses import dataclass, asdict
-from enum import Enum
+from enum import Enum, StrEnum, auto
 from typing import Optional
 
 
-class Opcode(str, Enum):
-    DUP = "dup"
-    OVER = "over"
-    POP = "pop"
-    SWAP = "swap"
-    LOAD = "load"
-    SAVE = "save"
-    INC = "inc"
-    DEC = "dec"
-    ADD = "add"
-    SUB = "sub"
-    DIV = "div"
-    XOR = "xor"
-    MUL = "mul"
-    JUMP = "jump"
-    JZ = "jz"
-    PUSH = "push"
-    WORD = "word"
-    HALT = "halt"
-
-    def __str__(self):
-        return self.value
-
-
-class ArgType(str, Enum):
-    IMPL = "implicit"
-    ADDR = "address"
+class Opcode(StrEnum):
+    DUP = auto()
+    OVER = auto()
+    POP = auto()
+    SWAP = auto()
+    LOAD = auto()
+    SAVE = auto()
+    INC = auto()
+    DEC = auto()
+    ADD = auto()
+    SUB = auto()
+    DIV = auto()
+    XOR = auto()
+    MUL = auto()
+    JUMP = auto()
+    JZ = auto()
+    PUSH = auto()
+    WORD = auto()
+    HALT = auto()
+    TEST = auto()
 
 
 @dataclass
 class Instruction:
     opcode: Opcode
     arg: Optional[int | str] = None
-    arg_type: Optional[ArgType] = None
 
     def to_dict(self):
-        # exclude None fields
         data = asdict(self)
         return {key: value for key, value in data.items() if value is not None}
+
+    @staticmethod
+    def from_dict(data: dict):
+        assert "opcode" in data, "Parsing Instruction failed! Check translator"
+        return Instruction(data["opcode"], data["arg"] if "arg" in data else None)
+
+    def __str__(self) -> str:
+        return str(self.to_dict())
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -60,4 +59,4 @@ def write_code(filename: str, code: dict) -> None:
 
 
 def read_code(filename: str) -> dict[str, str]:
-    raise NotImplementedError()
+    return json.load(open(filename, encoding="utf-8"))
