@@ -1,3 +1,4 @@
+import argparse
 import logging
 import sys
 from collections import deque
@@ -37,11 +38,11 @@ class ALU:
             case AluOperation.ADD:
                 output_value = left + right
             case AluOperation.SUB:
-                output_value = left - right
+                output_value = right - left
             case AluOperation.MUL:
                 output_value = left * right
             case AluOperation.DIV:
-                output_value = left // right
+                output_value = right // left
             case AluOperation.XOR:
                 output_value = left ^ right
             case AluOperation.NOT:
@@ -61,12 +62,17 @@ class ALU:
 
 
 class IO:
-    def __init__(self, input_buffer: list[int]):
+    def __init__(self, input_buffer: list[int], is_int_io: bool):
+        self.is_int_io = is_int_io
         self.output = ""
         self.input_buffer = deque(input_buffer)
 
+
     def write_byte(self, b: int):
-        self.output += chr(b)
+        if self.is_int_io:
+            self.output += str(b)
+        else:
+            self.output += chr(b)
 
     def read_byte(self) -> int:
         if len(self.input_buffer) == 0:
@@ -329,9 +335,9 @@ class ControlUnit:
         return f"{state_repr} \t{instr_repr:32} \t{stack_repr} "
 
 
-def simulation(code_raw: dict, input_tokens, limit) -> tuple[str, int, int]:
+def simulation(code_raw: dict, input_tokens, is_int_io, limit) -> tuple[str, int, int]:
     alu = ALU()
-    io = IO(input_tokens)
+    io = IO(input_tokens, is_int_io)
     ios = {101: io}
     code = list(map(Instruction.from_dict, code_raw["code"]))
     data_path = DataPath(alu, code, ios)
@@ -355,18 +361,21 @@ def simulation(code_raw: dict, input_tokens, limit) -> tuple[str, int, int]:
     return io.output, instr_counter, control_unit.current_tick()
 
 
-def main(code_filename: str, input_filename: str):
+def main(code_filename: str, input_filename: str, is_int_io: str):
     code = read_code(code_filename)
     with open(input_filename, encoding="utf-8") as file:
         input_text = file.read()
         input_token = list(map(ord, input_text + "\0"))
-    output, instr_counter, ticks = simulation(code, input_token, limit=1000)
+    output, instr_counter, ticks = simulation(code, input_token, is_int_io, limit=1000)
     print("".join(output))
     print("instr_counter: ", instr_counter, "ticks: ", ticks)
 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
-    assert len(sys.argv) == 3, "Wrong arguments: machine.py <code_file> <input_file>"
-    _, code_file, input_file = sys.argv
-    main(code_file, input_file)
+    parser = argparse.ArgumentParser(description='Stack machine')
+    parser.add_argument('--iotype', type=str, nargs='?', help='"int" for int io output and str for str io output', default="str")
+    parser.add_argument('input_file', type=str, nargs=1, help='input_file')
+    parser.add_argument('output_file', type=str, nargs=1, help='output_file')
+    args = parser.parse_args()
+    main(args.input_file[0], args.output_file[0], args.iotype == "int")
