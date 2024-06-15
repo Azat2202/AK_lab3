@@ -13,10 +13,6 @@ black = "^24.4.2"
 pylint = "^3.2.3"
 mypy = "^1.10.0"
 
-[tool.poetry.scripts]
-translator = "ak_lab3.translator"
-machine = "ak_lab3.machine"
-
 [tool.poe.tasks]
 _pylint = "pylint ak_lab3 tests"
 _mypy = "mypy ak_lab3 tests"
