@@ -1,5 +1,5 @@
 number:
-        WORD    999
+        WORD    0x3E7   ; 999
 _start:
         PUSH    number  ; [number]
         LOAD            ; [999]
@@ -47,4 +47,7 @@ compute_ans:
         POP             ; [166833; 99500; 33165]
         SUB             ; [166833; 66335]
         ADD             ; [233168]
+        PUSH    0x65    ; [233168; 0x65]
+        SAVE
+        HALT
 
