@@ -72,17 +72,17 @@ def translate(input_data: AnyStr) -> dict:
     }
 
 
-def main():
-    assert (
-        len(sys.argv) == 3
-    ), "Wrong arguments: translator.py <input_file> <output_file>"
-    _, source, target = sys.argv
-    with open(source, "r", encoding="utf-8") as file:
+def main(source_file: str, target_file: str):
+    with open(source_file, "r", encoding="utf-8") as file:
         input_data = file.read()
 
     code = translate(input_data)
-    write_code(target, code)
+    write_code(target_file, code)
 
 
 if __name__ == "__main__":
-    main()
+    assert (
+            len(sys.argv) == 3
+    ), "Wrong arguments: translator.py <input_file> <output_file>"
+    _, source, target = sys.argv
+    main(source, target)
